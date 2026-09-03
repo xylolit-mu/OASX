@@ -220,27 +220,34 @@ class _ScriptAnalysisPanelState extends State<ScriptAnalysisPanel> {
   }
 
   Widget _densityCard(ScriptAnalysisSnapshot data) {
-    final values = data.clicksPerFourHours;
+    final randomValues = data.randomClicksPerFourHours;
+    final totalValues = data.clicksPerFourHours;
     final dailyValues = _recentSnapshots.entries.toList().reversed.toList();
+    const periodLabels = [
+      '00–04',
+      '04–08',
+      '08–12',
+      '12–16',
+      '16–20',
+      '20–24',
+    ];
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: LayoutBuilder(builder: (context, constraints) {
-          final minute = _titledChart(
+          final meaningless = _titledChart(
             I18n.homeAnalysisDensityTitle.tr,
-            values.isEmpty
-                ? null
-                : _lineChart([
-                    for (var i = 0; i < values.length; i++)
-                      FlSpot(i.toDouble(), values[i].toDouble()),
-                  ], bottomLabels: const [
-                    '00–04',
-                    '04–08',
-                    '08–12',
-                    '12–16',
-                    '16–20',
-                    '20–24',
-                  ]),
+            _lineChart([
+              for (var i = 0; i < randomValues.length; i++)
+                FlSpot(i.toDouble(), randomValues[i].toDouble()),
+            ], bottomLabels: periodLabels),
+          );
+          final total = _titledChart(
+            I18n.homeAnalysisTotalDensityTitle.tr,
+            _lineChart([
+              for (var i = 0; i < totalValues.length; i++)
+                FlSpot(i.toDouble(), totalValues[i].toDouble()),
+            ], bottomLabels: periodLabels),
           );
           final daily = _titledChart(
             I18n.homeAnalysisDailyTrendTitle.tr,
@@ -260,13 +267,35 @@ class _ScriptAnalysisPanelState extends State<ScriptAnalysisPanel> {
                   ),
           );
           if (constraints.maxWidth < 720) {
-            return Column(children: [minute, const SizedBox(height: 16), daily]);
+            return Column(children: [
+              meaningless,
+              const SizedBox(height: 16),
+              total,
+              const SizedBox(height: 16),
+              daily,
+            ]);
           }
-          return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Expanded(child: minute),
-            const SizedBox(width: 16),
-            Expanded(child: daily),
-          ]);
+          if (constraints.maxWidth < 1080) {
+            return Column(children: [
+              Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Expanded(child: meaningless),
+                const SizedBox(width: 16),
+                Expanded(child: total),
+              ]),
+              const SizedBox(height: 16),
+              daily,
+            ]);
+          }
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: meaningless),
+              const SizedBox(width: 16),
+              Expanded(child: total),
+              const SizedBox(width: 16),
+              Expanded(child: daily),
+            ],
+          );
         }),
       ),
     );

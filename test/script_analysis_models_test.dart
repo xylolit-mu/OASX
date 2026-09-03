@@ -36,6 +36,7 @@ void main() {
     expect(result.clicksByTask['AreaBoss'], 2);
     expect(result.events.last.kind, ScriptActionKind.swipe);
     expect(result.clicksPerFourHours, [0, 0, 2, 0, 0, 0]);
+    expect(result.randomClicksPerFourHours, [0, 0, 1, 0, 0, 0]);
   });
 
   test('parses compact timestamps returned by the log API', () {

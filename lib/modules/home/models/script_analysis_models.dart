@@ -46,10 +46,18 @@ class ScriptAnalysisSnapshot {
   }
 
   List<int> get clicksPerFourHours {
+    return _clicksPerFourHours(
+      events.where((event) => event.kind == ScriptActionKind.click),
+    );
+  }
+
+  List<int> get randomClicksPerFourHours {
+    return _clicksPerFourHours(events.where((event) => event.isRandomClick));
+  }
+
+  List<int> _clicksPerFourHours(Iterable<ScriptActionEvent> source) {
     final values = List<int>.filled(6, 0);
-    for (final event in events.where(
-      (event) => event.kind == ScriptActionKind.click,
-    )) {
+    for (final event in source) {
       values[event.time.hour ~/ 4]++;
     }
     return values;

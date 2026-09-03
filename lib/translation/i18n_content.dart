@@ -182,6 +182,7 @@ class I18n {
       homeAnalysisShowPath = 'home_analysis_show_path',
       homeAnalysisPathTitle = 'home_analysis_path_title',
       homeAnalysisDensityTitle = 'home_analysis_density_title',
+      homeAnalysisTotalDensityTitle = 'home_analysis_total_density_title',
       homeAnalysisDailyTrendTitle = 'home_analysis_daily_trend_title',
       homeAnalysisRankingTitle = 'home_analysis_ranking_title',
       homeAnalysisEmpty = 'home_analysis_empty',
