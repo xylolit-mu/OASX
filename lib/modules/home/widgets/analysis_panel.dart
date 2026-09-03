@@ -86,10 +86,15 @@ class _ScriptAnalysisPanelState extends State<ScriptAnalysisPanel> {
         for (final line in window.lines) {
           byKey[line.key] = line;
         }
-        final oldest = window.lines.isEmpty ? '' : window.lines.first.text;
+        final oldestFileName =
+            window.lines.isEmpty ? '' : window.lines.first.fileName;
+        final oldestDate = oldestFileName.length >= 10
+            ? oldestFileName.substring(0, 10)
+            : '';
         if (window.reachedStart ||
             !window.hasOlder ||
-            oldest.compareTo(oldestRequiredDate) < 0) {
+            (oldestDate.isNotEmpty &&
+                oldestDate.compareTo(oldestRequiredDate) < 0)) {
           break;
         }
         cursor = window.olderCursor;

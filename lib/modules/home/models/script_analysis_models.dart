@@ -67,7 +67,12 @@ ScriptAnalysisSnapshot parseScriptAnalysis(
   Iterable<ScriptLogLine> lines,
   String dateKey,
 ) {
-  final timestamp = RegExp(r'^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})');
+  final fullTimestamp = RegExp(
+    r'^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})',
+  );
+  final compactTimestamp = RegExp(
+    r'^(\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})',
+  );
   final taskPattern = RegExp(r'\[Task\]\s+([A-Za-z0-9_]+)\s+\(');
   final clickPattern = RegExp(r'Click\s+\(\s*(\d+),\s*(\d+)\)\s+@\s+(.+?)\s*$');
   final swipePattern = RegExp(
@@ -76,13 +81,21 @@ ScriptAnalysisSnapshot parseScriptAnalysis(
   var task = 'Unknown';
   final events = <ScriptActionEvent>[];
   for (final line in lines) {
-    if (!line.text.startsWith(dateKey)) continue;
+    final fileDate = line.fileName.length >= 10
+        ? line.fileName.substring(0, 10)
+        : '';
+    if (fileDate != dateKey) continue;
     final taskMatch = taskPattern.firstMatch(line.text);
     if (taskMatch != null) task = taskMatch.group(1)!;
-    final timeMatch = timestamp.firstMatch(line.text);
-    final time = timeMatch == null
+    final fullTimeMatch = fullTimestamp.firstMatch(line.text);
+    final compactTimeMatch = compactTimestamp.firstMatch(line.text);
+    final timestampText = fullTimeMatch?.group(1) ??
+        (compactTimeMatch == null
+            ? null
+            : '${dateKey.substring(0, 4)}-${compactTimeMatch.group(1)}');
+    final time = timestampText == null
         ? null
-        : DateTime.tryParse(timeMatch.group(1)!.replaceFirst(' ', 'T'));
+        : DateTime.tryParse(timestampText.replaceFirst(' ', 'T'));
     if (time == null) continue;
     final click = clickPattern.firstMatch(line.text);
     if (click != null) {
