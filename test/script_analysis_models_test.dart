@@ -17,7 +17,7 @@ ScriptLogLine line(
     );
 
 void main() {
-  test('parses clicks, swipes, tasks, and random click density', () {
+  test('parses clicks, swipes, tasks, and four-hour click density', () {
     final result = parseScriptAnalysis([
       line(1, '2026-09-03 08:24:44.378 | logger.py | INFO | [Task] AreaBoss (Enable, 5, now)'),
       line(2, '2026-09-03 08:25:05.667 | control.py | INFO | [0.05s] Click ( 664,  409) @ SAFE_RANDOM_CLICK'),
@@ -35,7 +35,7 @@ void main() {
     expect(result.taskCount, 1);
     expect(result.clicksByTask['AreaBoss'], 2);
     expect(result.events.last.kind, ScriptActionKind.swipe);
-    expect(result.randomClicksPerMinute.single.value, 1);
+    expect(result.clicksPerFourHours, [0, 0, 2, 0, 0, 0]);
   });
 
   test('parses compact timestamps returned by the log API', () {

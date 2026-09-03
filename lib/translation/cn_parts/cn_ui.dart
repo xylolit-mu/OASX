@@ -216,7 +216,7 @@ final Map<String, String> _cn_ui = {
   I18n.homeAnalysisShowSwipes: '滑动',
   I18n.homeAnalysisShowPath: '点击顺序连线',
   I18n.homeAnalysisPathTitle: '点击位置与顺序',
-  I18n.homeAnalysisDensityTitle: '无意义点击密度（次/分钟）',
+  I18n.homeAnalysisDensityTitle: '全天点击密度（每4小时总点击次数）',
   I18n.homeAnalysisDailyTrendTitle: '近几日平均点击密度（次/天）',
   I18n.homeAnalysisRankingTitle: '任务点击强度排名',
   I18n.homeAnalysisEmpty: '当前日期暂无可分析的操作日志',

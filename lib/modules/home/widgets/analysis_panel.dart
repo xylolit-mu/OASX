@@ -220,7 +220,7 @@ class _ScriptAnalysisPanelState extends State<ScriptAnalysisPanel> {
   }
 
   Widget _densityCard(ScriptAnalysisSnapshot data) {
-    final values = data.randomClicksPerMinute;
+    final values = data.clicksPerFourHours;
     final dailyValues = _recentSnapshots.entries.toList().reversed.toList();
     return Card(
       child: Padding(
@@ -232,7 +232,14 @@ class _ScriptAnalysisPanelState extends State<ScriptAnalysisPanel> {
                 ? null
                 : _lineChart([
                     for (var i = 0; i < values.length; i++)
-                      FlSpot(i.toDouble(), values[i].value.toDouble()),
+                      FlSpot(i.toDouble(), values[i].toDouble()),
+                  ], bottomLabels: const [
+                    '00–04',
+                    '04–08',
+                    '08–12',
+                    '12–16',
+                    '16–20',
+                    '20–24',
                   ]),
           );
           final daily = _titledChart(

@@ -45,21 +45,14 @@ class ScriptAnalysisSnapshot {
     return values;
   }
 
-  List<MapEntry<DateTime, int>> get randomClicksPerMinute {
-    final values = <DateTime, int>{};
-    for (final event in events.where((e) => e.isRandomClick)) {
-      final minute = DateTime(
-        event.time.year,
-        event.time.month,
-        event.time.day,
-        event.time.hour,
-        event.time.minute,
-      );
-      values.update(minute, (value) => value + 1, ifAbsent: () => 1);
+  List<int> get clicksPerFourHours {
+    final values = List<int>.filled(6, 0);
+    for (final event in events.where(
+      (event) => event.kind == ScriptActionKind.click,
+    )) {
+      values[event.time.hour ~/ 4]++;
     }
-    final result = values.entries.toList()
-      ..sort((left, right) => left.key.compareTo(right.key));
-    return result;
+    return values;
   }
 }
 

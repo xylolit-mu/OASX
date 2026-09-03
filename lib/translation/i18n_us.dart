@@ -151,7 +151,7 @@ final Map<String, String> _us_ui = {
   I18n.homeAnalysisShowSwipes: 'Swipes',
   I18n.homeAnalysisShowPath: 'Connect click order',
   I18n.homeAnalysisPathTitle: 'Click positions and order',
-  I18n.homeAnalysisDensityTitle: 'Meaningless click density (per minute)',
+  I18n.homeAnalysisDensityTitle: 'Daily click density (total per 4 hours)',
   I18n.homeAnalysisDailyTrendTitle: 'Recent average click density (per day)',
   I18n.homeAnalysisRankingTitle: 'Task click intensity ranking',
   I18n.homeAnalysisEmpty: 'No operation logs to analyze for this date',
