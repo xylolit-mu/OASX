@@ -16,6 +16,8 @@ class MultiEnumDropdown extends StatelessWidget {
   final String? errorText;
   final bool enabled;
 
+  static const double _menuMaxHeight = 288;
+
   @override
   Widget build(BuildContext context) {
     final selected = value.toSet();
@@ -25,29 +27,45 @@ class MultiEnumDropdown extends StatelessWidget {
         .join(', ');
 
     return MenuAnchor(
-      menuChildren: options.map((option) {
-        final isSelected = selected.contains(option);
-        return MenuItemButton(
-          closeOnActivate: false,
-          trailingIcon: IgnorePointer(
-            child: Checkbox(value: isSelected, onChanged: (_) {}),
-          ),
-          onPressed: enabled
-              ? () {
-                  final next = selected.toSet();
-                  isSelected ? next.remove(option) : next.add(option);
-                  onChanged(
-                    options.where(next.contains).toList(growable: false),
+      menuChildren: [
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: _menuMaxHeight),
+          child: Scrollbar(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: options.map((option) {
+                  final isSelected = selected.contains(option);
+                  return MenuItemButton(
+                    closeOnActivate: false,
+                    trailingIcon: IgnorePointer(
+                      child: Checkbox(value: isSelected, onChanged: (_) {}),
+                    ),
+                    onPressed: enabled
+                        ? () {
+                            final next = selected.toSet();
+                            isSelected
+                                ? next.remove(option)
+                                : next.add(option);
+                            onChanged(
+                              options
+                                  .where(next.contains)
+                                  .toList(growable: false),
+                            );
+                          }
+                        : null,
+                    child: Text(
+                      option.tr,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   );
-                }
-              : null,
-          child: Text(
-            option.tr,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+                }).toList(growable: false),
+              ),
+            ),
           ),
-        );
-      }).toList(growable: false),
+        ),
+      ],
       builder: (context, controller, child) {
         return InkWell(
           onTap: enabled
