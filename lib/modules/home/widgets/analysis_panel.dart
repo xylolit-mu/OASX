@@ -23,6 +23,7 @@ class _ScriptAnalysisPanelState extends State<ScriptAnalysisPanel> {
   String _dateKey = '';
   ScriptAnalysisSnapshot? _snapshot;
   Map<String, ScriptAnalysisSnapshot> _recentSnapshots = const {};
+  String _error = '';
   bool _loading = true;
   bool _showClicks = true;
   bool _showSwipes = true;
@@ -46,6 +47,7 @@ class _ScriptAnalysisPanelState extends State<ScriptAnalysisPanel> {
     setState(() {
       _loading = true;
       _snapshot = null;
+      _error = '';
     });
     try {
       final response = await ApiClient().getScriptStatisticsDates(widget.scriptName);
@@ -53,9 +55,12 @@ class _ScriptAnalysisPanelState extends State<ScriptAnalysisPanel> {
       _dates = response.dates;
       _dateKey = _dates.isEmpty ? DateFormat('yyyy-MM-dd').format(DateTime.now()) : _dates.first;
       await _loadAnalysis(revision);
-    } catch (_) {
+    } catch (error) {
       if (!mounted || revision != _revision) return;
-      setState(() => _loading = false);
+      setState(() {
+        _error = error.toString();
+        _loading = false;
+      });
     }
   }
 
@@ -64,6 +69,7 @@ class _ScriptAnalysisPanelState extends State<ScriptAnalysisPanel> {
     setState(() {
       _loading = true;
       _snapshot = null;
+      _error = '';
     });
     try {
       final byKey = <String, ScriptLogLine>{};
@@ -75,7 +81,7 @@ class _ScriptAnalysisPanelState extends State<ScriptAnalysisPanel> {
           widget.scriptName,
           cursor: cursor,
           limitLines: 2000,
-          limitBytes: 2097152,
+          limitBytes: 1048576,
         );
         for (final line in window.lines) {
           byKey[line.key] = line;
@@ -106,9 +112,12 @@ class _ScriptAnalysisPanelState extends State<ScriptAnalysisPanel> {
         _recentSnapshots = recentSnapshots;
         _loading = false;
       });
-    } catch (_) {
+    } catch (error) {
       if (!mounted || revision != _revision) return;
-      setState(() => _loading = false);
+      setState(() {
+        _error = error.toString();
+        _loading = false;
+      });
     }
   }
 
@@ -124,7 +133,18 @@ class _ScriptAnalysisPanelState extends State<ScriptAnalysisPanel> {
         children: [
           _toolbar(),
           const SizedBox(height: 12),
-          if (snapshot == null || snapshot.events.isEmpty)
+          if (_error.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 48),
+              child: Center(
+                child: SelectableText(
+                  _error,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ),
+            )
+          else if (snapshot == null || snapshot.events.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 48),
               child: Center(child: Text(I18n.homeAnalysisEmpty.tr)),
