@@ -1,0 +1,116 @@
+import 'package:oasx/modules/log/log_browser_models.dart';
+
+enum ScriptActionKind { click, swipe }
+
+class ScriptActionEvent {
+  const ScriptActionEvent({
+    required this.time,
+    required this.kind,
+    required this.startX,
+    required this.startY,
+    required this.endX,
+    required this.endY,
+    required this.task,
+    required this.control,
+  });
+
+  final DateTime time;
+  final ScriptActionKind kind;
+  final double startX;
+  final double startY;
+  final double endX;
+  final double endY;
+  final String task;
+  final String control;
+
+  bool get isRandomClick =>
+      kind == ScriptActionKind.click && control.toLowerCase().contains('random');
+}
+
+class ScriptAnalysisSnapshot {
+  const ScriptAnalysisSnapshot(this.events);
+
+  final List<ScriptActionEvent> events;
+
+  int get clickCount =>
+      events.where((event) => event.kind == ScriptActionKind.click).length;
+  int get randomClickCount => events.where((event) => event.isRandomClick).length;
+  int get taskCount => clicksByTask.length;
+
+  Map<String, int> get clicksByTask {
+    final values = <String, int>{};
+    for (final event in events.where((e) => e.kind == ScriptActionKind.click)) {
+      values.update(event.task, (value) => value + 1, ifAbsent: () => 1);
+    }
+    return values;
+  }
+
+  List<MapEntry<DateTime, int>> get randomClicksPerMinute {
+    final values = <DateTime, int>{};
+    for (final event in events.where((e) => e.isRandomClick)) {
+      final minute = DateTime(
+        event.time.year,
+        event.time.month,
+        event.time.day,
+        event.time.hour,
+        event.time.minute,
+      );
+      values.update(minute, (value) => value + 1, ifAbsent: () => 1);
+    }
+    final result = values.entries.toList()
+      ..sort((left, right) => left.key.compareTo(right.key));
+    return result;
+  }
+}
+
+ScriptAnalysisSnapshot parseScriptAnalysis(
+  Iterable<ScriptLogLine> lines,
+  String dateKey,
+) {
+  final timestamp = RegExp(r'^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})');
+  final taskPattern = RegExp(r'\[Task\]\s+([A-Za-z0-9_]+)\s+\(');
+  final clickPattern = RegExp(r'Click\s+\(\s*(\d+),\s*(\d+)\)\s+@\s+(.+?)\s*$');
+  final swipePattern = RegExp(
+    r'Swipe\s+\(\s*(\d+),\s*(\d+)\)\s*->\s*\(\s*(\d+),\s*(\d+)\)',
+  );
+  var task = 'Unknown';
+  final events = <ScriptActionEvent>[];
+  for (final line in lines) {
+    if (!line.text.startsWith(dateKey)) continue;
+    final taskMatch = taskPattern.firstMatch(line.text);
+    if (taskMatch != null) task = taskMatch.group(1)!;
+    final timeMatch = timestamp.firstMatch(line.text);
+    final time = timeMatch == null
+        ? null
+        : DateTime.tryParse(timeMatch.group(1)!.replaceFirst(' ', 'T'));
+    if (time == null) continue;
+    final click = clickPattern.firstMatch(line.text);
+    if (click != null) {
+      events.add(ScriptActionEvent(
+        time: time,
+        kind: ScriptActionKind.click,
+        startX: double.parse(click.group(1)!),
+        startY: double.parse(click.group(2)!),
+        endX: double.parse(click.group(1)!),
+        endY: double.parse(click.group(2)!),
+        task: task,
+        control: click.group(3)!.trim(),
+      ));
+      continue;
+    }
+    final swipe = swipePattern.firstMatch(line.text);
+    if (swipe != null) {
+      events.add(ScriptActionEvent(
+        time: time,
+        kind: ScriptActionKind.swipe,
+        startX: double.parse(swipe.group(1)!),
+        startY: double.parse(swipe.group(2)!),
+        endX: double.parse(swipe.group(3)!),
+        endY: double.parse(swipe.group(4)!),
+        task: task,
+        control: 'Swipe',
+      ));
+    }
+  }
+  return ScriptAnalysisSnapshot(events);
+}
