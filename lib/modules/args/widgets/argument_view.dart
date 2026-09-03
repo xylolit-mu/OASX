@@ -166,6 +166,13 @@ class _ArgumentViewState extends State<ArgumentView> {
               .toList(),
           onChanged: isLocked ? null : onEnumChanged,
         ),
+      'multi_enum' => MultiEnumDropdown(
+          value: ArgumentModel.normalizeMultiEnumValue(model.value),
+          options: model.enumEnum ?? const <String>[],
+          errorText: errorText,
+          enabled: !isLocked,
+          onChanged: onMultiEnumChanged,
+        ),
       'date_time' => _buildPicker(
           DateTimePicker(value: model.value, onChange: onDateTimeChanged),
           errorText,

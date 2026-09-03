@@ -19,10 +19,11 @@ extension ApiClientScriptX on ApiClient {
     String type,
     dynamic value,
   ) async {
+    final encodedValue = type == 'multi_enum' ? jsonEncode(value) : value;
     final res = await request(
       () => put(
         '/$scriptName/$taskName/$groupName/$argumentName/value',
-        queryParameters: {'types': type, 'value': value},
+        queryParameters: {'types': type, 'value': encodedValue},
       ),
     );
     return res.isSuccess && res.data == true;

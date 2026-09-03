@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:dio_cache_interceptor/dio_cache_interceptor.dart';

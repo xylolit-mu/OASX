@@ -26,6 +26,10 @@ extension _ArgumentViewActions on _ArgumentViewState {
     _applyValue(value ?? '', 'enum', useSetState: true);
   }
 
+  void onMultiEnumChanged(List<String> value) {
+    _applyValue(value, 'multi_enum', useSetState: true);
+  }
+
   void onDateTimeChanged(String? value) {
     _applyValue(value ?? '', 'date_time', useSetState: true);
   }

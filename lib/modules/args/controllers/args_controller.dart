@@ -273,6 +273,7 @@ class ArgsController extends GetxController {
           ? null
           : I18n.argsInvalidTimeDelta.tr,
       'enum' => _validateEnum(model, current),
+      'multi_enum' => _validateMultiEnum(model, value),
       _ => null,
     };
   }
@@ -356,6 +357,15 @@ class ArgsController extends GetxController {
     return I18n.argsInvalidEnum.tr;
   }
 
+  String? _validateMultiEnum(ArgumentModel model, dynamic value) {
+    final options = model.enumEnum ?? const <String>[];
+    final selected = ArgumentModel.normalizeMultiEnumValue(value);
+    if (options.isEmpty || selected.every(options.contains)) {
+      return null;
+    }
+    return I18n.argsInvalidEnum.tr;
+  }
+
   String? _validateInteger(ArgumentModel model, String value) {
     final parsed = int.tryParse(value);
     if (parsed == null) {
@@ -430,6 +440,7 @@ class ArgumentModel {
   });
 
   factory ArgumentModel.fromJson(Map<String, dynamic> json) {
+    final type = json['type'] as String;
     return ArgumentModel(
       List<String>.from(json['enumEnum']?.map((item) => item) ?? []),
       json['minimum'],
@@ -437,9 +448,30 @@ class ArgumentModel {
       json['defaultValue'],
       json['description'],
       title: json['name'] as String,
-      value: json['value'],
-      type: json['type'] as String,
+      value: type == 'multi_enum'
+          ? normalizeMultiEnumValue(json['value'])
+          : json['value'],
+      type: type,
     );
+  }
+
+  static List<String> normalizeMultiEnumValue(dynamic value) {
+    if (value is List) {
+      return value.map((item) => item.toString()).toList(growable: false);
+    }
+    if (value is String && value.trim().isNotEmpty) {
+      try {
+        final decoded = jsonDecode(value);
+        if (decoded is List) {
+          return decoded
+              .map((item) => item.toString())
+              .toList(growable: false);
+        }
+      } on FormatException {
+        // An invalid stored value is treated as an empty selection.
+      }
+    }
+    return const <String>[];
   }
 
   set setValue(dynamic newValue) => value = newValue;

@@ -27,6 +27,7 @@ part 'widgets/time_delta_picker.dart';
 part 'widgets/time_picker.dart';
 part 'widgets/argument_view.dart';
 part 'widgets/argument_view_actions.dart';
+part 'widgets/multi_enum_dropdown.dart';
 part 'controllers/args_controller.dart';
 
 typedef SetArgumentCallback = void Function(
