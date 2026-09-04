@@ -410,16 +410,34 @@ class _ActionPathPainter extends CustomPainter {
         final point = _point(event.startX, event.startY, size);
         path.lineTo(point.dx, point.dy);
       }
-      canvas.drawPath(path, Paint()..color = colors.primary.withValues(alpha: .55)..strokeWidth = 2..style = PaintingStyle.stroke);
+      canvas.drawPath(
+        path,
+        Paint()
+          ..color = colors.primary.withValues(alpha: .32)
+          ..strokeWidth = 1.5
+          ..style = PaintingStyle.stroke,
+      );
     }
     if (showSwipes) {
       for (final event in events.where((e) => e.kind == ScriptActionKind.swipe)) {
-        canvas.drawLine(_point(event.startX, event.startY, size), _point(event.endX, event.endY, size), Paint()..color = colors.tertiary..strokeWidth = 3);
+        canvas.drawLine(
+          _point(event.startX, event.startY, size),
+          _point(event.endX, event.endY, size),
+          Paint()
+            ..color = colors.tertiary.withValues(alpha: .45)
+            ..strokeWidth = 2,
+        );
       }
     }
     if (showClicks) {
       for (final event in clicks) {
-        canvas.drawCircle(_point(event.startX, event.startY, size), event.isRandomClick ? 4 : 3, Paint()..color = event.isRandomClick ? colors.error : colors.primary);
+        canvas.drawCircle(
+          _point(event.startX, event.startY, size),
+          2,
+          Paint()
+            ..color = (event.isRandomClick ? colors.error : colors.primary)
+                .withValues(alpha: event.isRandomClick ? .6 : .5),
+        );
       }
     }
   }
