@@ -6,6 +6,8 @@ import 'package:flutter_nb_net/flutter_net.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:oasx/api/api_client.dart';
+import 'package:oasx/api/sse_client.dart';
+import 'package:oasx/modules/log/script_log_browser_controller.dart';
 import 'package:oasx/api/api_interceptor.dart';
 import 'package:oasx/api/log_api_response.dart';
 import 'package:oasx/modules/log/models/error_log_ownership.dart';
@@ -96,6 +98,43 @@ void main() {
     dio.interceptors.add(_SilentInterceptor());
   });
   setUp(() => api.setAddress('http://oasx-log-test-${index++}.invalid'));
+
+  test(
+    'stale stream cursor reloads latest window and replaces both cursors',
+    () async {
+      var requests = 0;
+      adapter.respond = (request) {
+        requests++;
+        expect(request.queryParameters.containsKey('cursor'), isFalse);
+        return jsonResponse({
+          'script_name': 'demo',
+          'lines': <Object>[],
+          'older_cursor': null,
+          'live_cursor': 'fresh-live',
+          'has_older': false,
+          'reached_start': true,
+        });
+      };
+      final controller = ScriptLogBrowserController(scriptName: 'demo');
+      controller.liveCursor = 'deleted-file';
+      controller.olderCursor = 'deleted-history';
+      controller.handleStreamEvent(
+        ApiSseEvent(
+          id: '',
+          name: 'error',
+          data:
+              '{"code":"LOG_CURSOR_STALE","message":"Cursor file is no longer available"}',
+        ),
+      );
+      for (var i = 0; i < 50 && controller.liveCursor != 'fresh-live'; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      expect(requests, 1);
+      expect(controller.liveCursor, 'fresh-live');
+      expect(controller.olderCursor, isNull);
+      controller.onClose();
+    },
+  );
 
   for (final endpoint in ['window', 'errors', 'detail', 'image']) {
     test('$endpoint HTTP failure throws actual status and message', () async {

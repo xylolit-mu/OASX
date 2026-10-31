@@ -15,6 +15,10 @@ import 'package:oasx/modules/home/models/config_model.dart';
 import 'package:oasx/modules/home/models/taskitem_model.dart';
 import 'package:oasx/modules/home/widgets/config_workbench.dart';
 import 'package:oasx/modules/home/widgets/desktop_workbench.dart';
+import 'package:oasx/modules/home/widgets/task_parameter_panel.dart';
+import 'package:oasx/modules/home/widgets/task_status_panel.dart';
+import 'package:oasx/modules/home/widgets/task_status_row.dart';
+import 'package:oasx/translation/i18n_content.dart';
 import 'package:oasx/service/script_service.dart';
 import 'package:oasx/service/websocket_service.dart';
 import 'package:oasx/translation/i18n.dart';
@@ -333,6 +337,29 @@ void main() {
       expect(find.text('任务总览'), findsNothing);
       expect(find.text('总览'), findsOneWidget);
       expect(tester.takeException(), isNull);
+      // Navigation must update without another window layout pass.
+      for (var cycle = 0; cycle < 2; cycle++) {
+        controller.activeTaskName.value = 'Chess';
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(find.byType(TaskParameterPanel), findsOneWidget);
+        expect(
+          find.byKey(const ValueKey('desktop-task-schedule')),
+          findsNothing,
+        );
+        final back = find.descendant(
+          of: find.byType(TaskParameterPanel),
+          matching: find.byIcon(Icons.arrow_back_rounded),
+        );
+        await tester.tap(back);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(find.byType(TaskParameterPanel), findsNothing);
+        final schedule = find.byKey(const ValueKey('desktop-task-schedule'));
+        expect(schedule, findsOneWidget);
+        expect(tester.getSize(schedule).width, greaterThan(300));
+        expect(tester.takeException(), isNull);
+      }
       tester.view.physicalSize = const Size(900, 760);
       await tester.pump(const Duration(milliseconds: 400));
       expect(find.byKey(const ValueKey('compact-left-logs')), findsOneWidget);
@@ -346,6 +373,64 @@ void main() {
       }
     },
   );
+
+  testWidgets('task actions unlock immediately after stop without resizing', (
+    tester,
+  ) async {
+    final controller = setup();
+    final model = Get.find<ScriptService>().scriptModelMap['CDB']!;
+    model.runningTask.value = TaskItemModel('CDB', 'Orochi', '');
+    var waits = 0;
+    await tester.pumpWidget(
+      GetMaterialApp(
+        translations: Messages(),
+        locale: const Locale('zh', 'CN'),
+        home: Scaffold(
+          body: SizedBox(
+            width: 400,
+            height: 600,
+            child: TaskStatusPanel(
+              controller: controller,
+              scriptModel: model,
+              compact: true,
+              canQuickScheduleTask: (name) =>
+                  controller.canQuickScheduleTask(model, name),
+              onSetNextRun: (_, __) async {},
+              onQuickRun: (_) async {},
+              onQuickWait: (_) async {
+                waits++;
+              },
+              onEditTask: (_) async {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    final row = find.byKey(const ValueKey('running::Orochi'));
+    final wait = find.descendant(
+      of: row,
+      matching: find.byWidgetPredicate(
+        (widget) =>
+            widget is IconButton && widget.tooltip == I18n.homeQuickWait.tr,
+      ),
+    );
+    for (var cycle = 0; cycle < 3; cycle++) {
+      model.state.value = ScriptState.running;
+      await tester.pump();
+      expect(tester.widget<IconButton>(wait).onPressed, isNull);
+      expect(tester.widget<TaskStatusRow>(row).swipeEnabled, isFalse);
+      model.state.value = ScriptState.inactive;
+      await tester.pump();
+      expect(tester.widget<IconButton>(wait).onPressed, isNotNull);
+      expect(tester.widget<TaskStatusRow>(row).swipeEnabled, isTrue);
+      await tester.tap(wait);
+      await tester.pump();
+    }
+    expect(waits, 3);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
 
   testWidgets('date distribution toggles actual next-run filtering', (
     tester,

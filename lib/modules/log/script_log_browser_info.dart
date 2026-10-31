@@ -61,7 +61,13 @@ extension ScriptLogBrowserInfoX on ScriptLogBrowserController {
       }
     } catch (error) {
       if (isOlderLoadActive(requestId)) {
-        infoError.value = error.toString();
+        if (error is LogApiException && error.statusCode == 409) {
+          olderCursor = null;
+          olderLoading.value = false;
+          await refreshLatest();
+        } else {
+          infoError.value = error.toString();
+        }
       }
     } finally {
       if (isOlderLoadActive(requestId)) {

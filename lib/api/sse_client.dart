@@ -3,21 +3,12 @@ import 'dart:convert';
 import 'dart:io';
 
 /// Connection states reported by the generic SSE client.
-enum ApiSseConnectionState {
-  connecting,
-  connected,
-  reconnecting,
-  error,
-}
+enum ApiSseConnectionState { connecting, connected, reconnecting, error }
 
 /// One parsed SSE event.
 class ApiSseEvent {
   /// Creates an SSE event model.
-  ApiSseEvent({
-    required this.id,
-    required this.name,
-    required this.data,
-  });
+  ApiSseEvent({required this.id, required this.name, required this.data});
 
   /// Event id.
   final String id;
@@ -36,18 +27,22 @@ class ApiSseClient {
     required this.url,
     required this.onEvent,
     required this.onStateChanged,
+    this.urlProvider,
     this.retryDelay = const Duration(seconds: 3),
   });
 
   /// SSE endpoint URL.
   final Uri url;
 
+  /// Resolves the latest resume cursor on every connection attempt.
+  final Uri Function()? urlProvider;
+
   /// Callback invoked for every parsed event.
   final void Function(ApiSseEvent event) onEvent;
 
   /// Callback invoked when connection state changes.
   final void Function(ApiSseConnectionState state, String? message)
-      onStateChanged;
+  onStateChanged;
 
   /// Delay used before reconnecting after a failure.
   final Duration retryDelay;
@@ -85,7 +80,7 @@ class ApiSseClient {
     final client = HttpClient();
     _client = client;
     try {
-      final request = await client.getUrl(url);
+      final request = await client.getUrl(urlProvider?.call() ?? url);
       request.persistentConnection = true;
       request.followRedirects = false;
       request.headers.set(HttpHeaders.acceptHeader, 'text/event-stream');
@@ -137,35 +132,37 @@ class ApiSseClient {
     var currentId = '';
     var currentEvent = '';
     var dataBuffer = StringBuffer();
-    _lineSubscription =
-        response.transform(utf8.decoder).transform(const LineSplitter()).listen(
-              (line) {
-                if (!_isActive(generation)) {
-                  return;
-                }
-                if (line.isEmpty) {
-                  _emitEvent(currentId, currentEvent, dataBuffer);
-                  currentId = '';
-                  currentEvent = '';
-                  dataBuffer = StringBuffer();
-                  return;
-                }
-                if (line.startsWith(':')) {
-                  return;
-                }
-                _consumeLine(
-                  line,
-                  onId: (value) => currentId = value,
-                  onEvent: (value) => currentEvent = value,
-                  onData: (value) => dataBuffer.writeln(value),
-                );
-              },
-              onDone: () => _handleFailure(generation, 'stream_closed'),
-              onError: (Object error, StackTrace stackTrace) {
-                _handleFailure(generation, error.toString());
-              },
-              cancelOnError: true,
+    _lineSubscription = response
+        .transform(utf8.decoder)
+        .transform(const LineSplitter())
+        .listen(
+          (line) {
+            if (!_isActive(generation)) {
+              return;
+            }
+            if (line.isEmpty) {
+              _emitEvent(currentId, currentEvent, dataBuffer);
+              currentId = '';
+              currentEvent = '';
+              dataBuffer = StringBuffer();
+              return;
+            }
+            if (line.startsWith(':')) {
+              return;
+            }
+            _consumeLine(
+              line,
+              onId: (value) => currentId = value,
+              onEvent: (value) => currentEvent = value,
+              onData: (value) => dataBuffer.writeln(value),
             );
+          },
+          onDone: () => _handleFailure(generation, 'stream_closed'),
+          onError: (Object error, StackTrace stackTrace) {
+            _handleFailure(generation, error.toString());
+          },
+          cancelOnError: true,
+        );
   }
 
   void _consumeLine(

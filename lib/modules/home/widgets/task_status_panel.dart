@@ -93,25 +93,27 @@ class _TaskStatusPanelState extends State<TaskStatusPanel> {
                         SizedBox(height: widget.compact ? 4 : 10),
                     itemBuilder: (context, index) {
                       final task = visibleTasks[index];
-                      return TaskStatusRow(
-                        key: ValueKey(task.rowId),
-                        controller: widget.controller,
-                        sourceScriptName: widget.scriptModel.name,
-                        task: task,
-                        canQuickSchedule: widget.canQuickScheduleTask(
-                          task.name,
+                      return Obx(
+                        () => TaskStatusRow(
+                          key: ValueKey(task.rowId),
+                          controller: widget.controller,
+                          sourceScriptName: widget.scriptModel.name,
+                          task: task,
+                          canQuickSchedule: widget.canQuickScheduleTask(
+                            task.name,
+                          ),
+                          quickScheduleLocked: quickScheduleLocked,
+                          onSetNextRun: widget.onSetNextRun,
+                          onQuickRun: widget.onQuickRun,
+                          onQuickWait: widget.onQuickWait,
+                          onEditTask: widget.onEditTask,
+                          onDisableTask: _disableTask,
+                          onDismissed: _markTaskHidden,
+                          dragEnabled: widget.controller.canUseDesktopDragCopy,
+                          swipeEnabled: !_isSwipeDisabled(task),
+                          activeDragPayload: dragPayload,
+                          compact: widget.compact,
                         ),
-                        quickScheduleLocked: quickScheduleLocked,
-                        onSetNextRun: widget.onSetNextRun,
-                        onQuickRun: widget.onQuickRun,
-                        onQuickWait: widget.onQuickWait,
-                        onEditTask: widget.onEditTask,
-                        onDisableTask: _disableTask,
-                        onDismissed: _markTaskHidden,
-                        dragEnabled: widget.controller.canUseDesktopDragCopy,
-                        swipeEnabled: !_isSwipeDisabled(task),
-                        activeDragPayload: dragPayload,
-                        compact: widget.compact,
                       );
                     },
                   ),

@@ -79,19 +79,27 @@ class ApiInterceptor extends Interceptor {
     } else if (data != null && data.toString().trim().isNotEmpty) {
       msg = data.toString();
     }
-    switch (code) {
-      case 403:
-        break;
-      case 404:
-        showNetErrCodeSnackBar(I18n.networkNotFound.tr, code);
-        break;
-      case 500:
-      case 400:
-        showErrSnackBar(I18n.networkServerError.tr, code, msg);
-        break;
-      default:
-        showNetErrCodeSnackBar(msg, code);
-        break;
+    final detail = data is Map ? data['detail'] : null;
+    final staleLogCursor =
+        code == 409 &&
+        err.requestOptions.path.startsWith('/logs/') &&
+        (data is Map && data['code'] == 'LOG_CURSOR_STALE' ||
+            detail is Map && detail['code'] == 'LOG_CURSOR_STALE');
+    if (!staleLogCursor) {
+      switch (code) {
+        case 403:
+          break;
+        case 404:
+          showNetErrCodeSnackBar(I18n.networkNotFound.tr, code);
+          break;
+        case 500:
+        case 400:
+          showErrSnackBar(I18n.networkServerError.tr, code, msg);
+          break;
+        default:
+          showNetErrCodeSnackBar(msg, code);
+          break;
+      }
     }
     err.response?.data = {'code': code, 'error': msg, 'data': ''};
     handler.resolve(err.response!);

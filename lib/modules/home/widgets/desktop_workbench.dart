@@ -391,7 +391,7 @@ class _DesktopWorkbenchState extends State<DesktopWorkbench> {
     BuildContext context,
     ScriptModel script,
   ) => LayoutBuilder(
-    builder: (context, constraints) {
+    builder: (context, constraints) => Obx(() {
       final sideBySide = constraints.maxWidth >= 700;
       final activeTab = widget.controller.activeWorkbenchTab.value;
       final currentTab =
@@ -400,7 +400,7 @@ class _DesktopWorkbenchState extends State<DesktopWorkbench> {
           ? activeTab
           : HomeWorkbenchTab.status;
       return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Wrap(
             spacing: 6,
@@ -467,7 +467,7 @@ class _DesktopWorkbenchState extends State<DesktopWorkbench> {
           ),
         ],
       );
-    },
+    }),
   );
 
   Widget _empty() =>

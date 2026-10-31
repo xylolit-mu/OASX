@@ -13,8 +13,17 @@ extension ScriptLogBrowserStreamX on ScriptLogBrowserController {
     );
     streamClient = ApiSseClient(
       url: uri,
-      onEvent: handleStreamEvent,
-      onStateChanged: handleStreamState,
+      urlProvider: () => ApiClient().buildScriptLogStreamUri(
+        scriptName,
+        cursor: liveCursor,
+        limitLines: kAutoScrollLogWindowLineLimit,
+      ),
+      onEvent: (event) {
+        if (isRequestActive(requestId)) handleStreamEvent(event);
+      },
+      onStateChanged: (state, message) {
+        if (isRequestActive(requestId)) handleStreamState(state, message);
+      },
     );
     unawaited(streamClient?.connect());
   }
@@ -58,6 +67,10 @@ extension ScriptLogBrowserStreamX on ScriptLogBrowserController {
           appendLiveLines(data);
           break;
         case 'error':
+          if (data['code'] == 'LOG_CURSOR_STALE') {
+            unawaited(refreshLatest());
+            return;
+          }
           infoError.value = data['message']?.toString() ?? payload;
           streamStatus.value = ScriptLogStreamStatus.error;
           break;
@@ -100,6 +113,7 @@ extension ScriptLogBrowserStreamX on ScriptLogBrowserController {
     final value = cursor?.toString() ?? '';
     if (value.isNotEmpty) {
       liveCursor = value;
+      infoError.value = '';
     }
   }
 }
